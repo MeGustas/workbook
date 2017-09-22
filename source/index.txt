@@ -9,8 +9,9 @@ Welcome to workbook's documentation!
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
-
-
+   
+   1
+   2
 
 Indices and tables
 ==================
