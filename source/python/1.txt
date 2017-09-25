@@ -1,21 +1,25 @@
 搭建python量化环境
 ===============================
 
-1、安装apparmor相关软件
+1.安装apparmor相关软件
+
 	Ubuntu/debian系统集成了apparmor，但包括的profile文件(类似规则文件)及一些附带的操作模块较少，可以自行安装。
-    安装补充的profiles：
-    sudo apt-get install apparmor-profiles
-    安装方便操作apparmor的工具： 
-    sudo apt-get install apparmor-utils
-    安装完成后，运行apparmor_status，如果显示如下错误：
-	apparmor module is loaded.
-	apparmor filesystem is not mounted.
-	则修改/etc/default/grub文件，设置：
-	GRUB_CMDLINE_LINUX_DEFAULT ="apparmor=1 security=apparmor"。
-	然后运行：
-	sudo update-grub
-	sudo reboot
-2、为沙箱添加用户和用户组
+	安装补充的profiles:
+	::
+		sudo apt-get install apparmor-profiles
+	
+	安装方便操作apparmor的工具:
+    ::
+		sudo apt-get install apparmor-utils
+	安装完成后，运行apparmor_status，如果显示如下错误::
+		pparmor module is loaded.
+		apparmor filesystem is not mounted.
+	则修改/etc/default/grub文件，设置::
+		GRUB_CMDLINE_LINUX_DEFAULT ="apparmor=1 security=apparmor"。
+	然后运行::
+		sudo update-grub
+		sudo reboot
+2.为沙箱添加用户和用户组::
 	sudo addgroup sandbox
 	sudo adduser --disabled-login sandbox --ingroup sandbox
 3、创建python虚拟环境

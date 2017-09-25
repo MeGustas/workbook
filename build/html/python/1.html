@@ -166,25 +166,35 @@
             
   <div class="section" id="python">
 <h1>搭建python量化环境<a class="headerlink" href="#python" title="Permalink to this headline">¶</a></h1>
+<p>1.安装apparmor相关软件</p>
+<blockquote>
+<div><blockquote>
+<div><p>Ubuntu/debian系统集成了apparmor，但包括的profile文件(类似规则文件)及一些附带的操作模块较少，可以自行安装。
+安装补充的profiles:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">apparmor</span><span class="o">-</span><span class="n">profiles</span>
+</pre></div>
+</div>
+<p>安装方便操作apparmor的工具:</p>
+</div></blockquote>
 <dl class="docutils">
-<dt>1、安装apparmor相关软件</dt>
+<dt>::</dt>
 <dd><blockquote class="first">
-<div>Ubuntu/debian系统集成了apparmor，但包括的profile文件(类似规则文件)及一些附带的操作模块较少，可以自行安装。</div></blockquote>
-<p>安装补充的profiles：
-sudo apt-get install apparmor-profiles
-安装方便操作apparmor的工具：
-sudo apt-get install apparmor-utils
-安装完成后，运行apparmor_status，如果显示如下错误：</p>
-<blockquote class="last">
-<div>apparmor module is loaded.
-apparmor filesystem is not mounted.
-则修改/etc/default/grub文件，设置：
-GRUB_CMDLINE_LINUX_DEFAULT =&quot;apparmor=1 security=apparmor&quot;。
-然后运行：
-sudo update-grub
-sudo reboot</div></blockquote>
+<div>sudo apt-get install apparmor-utils</div></blockquote>
+<dl class="last docutils">
+<dt>安装完成后，运行apparmor_status，如果显示如下错误::</dt>
+<dd>pparmor module is loaded.
+apparmor filesystem is not mounted.</dd>
+<dt>则修改/etc/default/grub文件，设置::</dt>
+<dd>GRUB_CMDLINE_LINUX_DEFAULT =&quot;apparmor=1 security=apparmor&quot;。</dd>
+<dt>然后运行::</dt>
+<dd>sudo update-grub
+sudo reboot</dd>
+</dl>
 </dd>
-<dt>2、为沙箱添加用户和用户组</dt>
+</dl>
+</div></blockquote>
+<dl class="docutils">
+<dt>2.为沙箱添加用户和用户组::</dt>
 <dd>sudo addgroup sandbox
 sudo adduser --disabled-login sandbox --ingroup sandbox</dd>
 <dt>3、创建python虚拟环境</dt>
