@@ -1,0 +1,126 @@
+搭建python量化环境
+===============================
+
+1、安装apparmor相关软件
+	Ubuntu/debian系统集成了apparmor，但包括的profile文件(类似规则文件)及一些附带的操作模块较少，可以自行安装。
+    安装补充的profiles：
+    sudo apt-get install apparmor-profiles
+    安装方便操作apparmor的工具： 
+    sudo apt-get install apparmor-utils
+    安装完成后，运行apparmor_status，如果显示如下错误：
+	apparmor module is loaded.
+	apparmor filesystem is not mounted.
+	则修改/etc/default/grub文件，设置：
+	GRUB_CMDLINE_LINUX_DEFAULT ="apparmor=1 security=apparmor"。
+	然后运行：
+	sudo update-grub
+	sudo reboot
+2、为沙箱添加用户和用户组
+	sudo addgroup sandbox
+	sudo adduser --disabled-login sandbox --ingroup sandbox
+3、创建python虚拟环境
+	创建虚拟环境需要使用virtualenv进行。先安装virtualenv。
+	sudo pip install virtualenv
+	再在路径/opt/virtualenv下创建python3的虚拟环境。
+	virtualenv --python=python3 py3
+4、配置项目服务以沙箱方式运行
+	创建配置文件/etc/sudoers.d/01-sandbox
+	sudo visudo -f /etc/sudoers.d/01-sandbox
+	并在文件中写入：
+	hexun ALL=(sandbox) SETENV:NOPASSWD:/opt/virtualenv/py3/bin/python3
+	hexun ALL=(sandbox) SETENV:NOPASSWD:/usr/bin/find
+	hexun ALL=(ALL) NOPASSWD:/usr/bin/pkill
+	其中：
+	hexun是在项目中调用代码的用户。有别于sandbox，作为沙箱内部的代码运行权限用	户。/opt/virtualenv/py3/bin/python3是步骤3中创建的虚拟环境。
+5、配置apparmor的配置文件
+	① 创建配置文件
+		创建配置文件的文件名参照被配置应用的路径的，如如下位置的文件：
+		/opt/virtualenv/py3/bin/python3
+		其权限配置文件名为：
+		opt.virtualenv.py3.bin.python3
+		所以使用以下代码配置文件：
+		sudo vi /etc/apparmor.d/ opt.virtualenv.py3.bin.python3
+		加入下述配置：
+		include <tunables/global>
+		/opt/virtualenv/py3/bin/python3 flags=(complain) {
+        	#include <abstractions/base>
+        	#include <abstractions/python>
+        	/opt/virtualenv/py3/** mr,
+        	#If you have code that the sandbox must be able to access, add lines
+        	#pointing to those directories:
+        	/the/path/to/your/sandbox-packages/** r,
+        	/tmp/codejail-*/ rix,
+        	/tmp/codejail-*/** wrix,
+			#cgroup
+        	/sys/fs/cgroup/ rix,
+        	/sys/fs/cgroup/** wrix,
+			#thrift network
+        	/tmp/** rix,
+        	/var/tmp/** wrix,
+        	/bin/dash ix,
+        	/sbin/ldconfig ix,
+        	/bin/uname ix,
+        	/etc/** r,
+        	/run/NetworkManager/** r,
+        	/proc/** r,
+        	network,
+        	#capabilities
+        	capability mknod,
+        	capability net_bind_service,
+        	capability net_admin,
+        	capability sys_tty_config,
+		}
+	② 解析配置文件
+		sudo apparmor_parser /etc/apparmor.d/opt.virtualenv.py3.bin.python3
+		重启服务以使其生效
+		sudo service apparmor restart
+6、配置机器中的python环境
+	① 安装依赖模块
+		svn地址：svn://svn.tool.hexun.com/jsyf/tech_lab/src/requirements
+		安装命令：pip install -r requirements_python2.txt
+				  pip3 install -r requirements_python3.txt
+		注意：此处的pip是安装到实际的python环境中的。并非虚拟环境py3。
+	② 安装CodeJail
+		svn地址：svn://svn.tool.hexun.com/jsyf/tech_lab/src/codejail。
+		CodeJail的安装包使用Python2进行安装，安装依赖python-setuptools，所以定位			至CodeJail源码文件夹之后使用：
+		sudo apt-get install python-setuptools(如已安装setuptools，则跳过)
+		sudo python2 setup.py bdist_egg
+		sudo python2 setup.py install
+		操作成功完成CodeJail安装。
+	③ 安装cgroups
+		svn地址：svn://svn.tool.hexun.com/jsyf/tech_lab/src/cgroups
+		定位至cgroups源码文件夹之后使用：
+		sudo python2 setup.py bdist_egg
+		sudo python2 setup.py install
+		操作成功完成Cgroups的安装。
+7、配置python虚拟环境
+	在CodeJail进行业务扩展变更的时候，需要对所使用的虚拟环境进行更改。由于虚拟环	境受到了AppArmor的保护，所以需要先通过
+	sudo aa-complain /etc/apparmor.d/ opt.virtualenv.py3.bin.python3
+	关闭AppArmor的保护，等完成环境更新之后再通过
+	sudo aa-enforce /etc/apparmor.d/ opt.virtualenv.py3.bin.python3
+	恢复对虚拟环境的权限保护。
+	此时先关闭Apparmor对虚拟环境的保护，然后使用：
+	source /opt/virtualenv/py3/bin/activate
+	进入py3虚拟环境，并安装一下python模块。
+	① 安装cgroups模块
+		svn地址：svn://svn.tool.hexun.com/jsyf/tech_lab/src/cgroups
+	安装命令：	(注意此时采用python，而非python2)
+				sudo python setup.py bdist_egg
+				sudo python setup.py install
+	② 安装quotedata_module模块
+		svn地址：svn://svn.tool.hexun.com/jsyf/tech_lab/src/quotedata_module
+		安装命令同上。
+	③ 安装pyalgoengine模块
+		svn地址：svn://svn.tool.hexun.com/jsyf/tech_lab/src/pyalgoengine
+		安装命令同上。
+	④ 安装其他依赖模块
+		svn地址：svn://svn.tool.hexun.com/jsyf/tech_lab/src/requirements
+		安装命令：pip install -r requirements_python3_env.txt
+	安装完成之后，使用deactivate命令退出py3虚拟环境。并恢复apparmor对于虚拟环	境的权限保护。
+8、开启量化Web服务
+	① 启动jupyter服务
+		svn地址：svn://svn.tool.hexun.com/jsyf/tech_lab/src/jupyter_task
+		执行start_jupyter.sh。
+	② 启动tornado服务
+		svn地址：svn://svn.tool.hexun.com/jsyf/tech_lab/src/jupyter_task
+		执行start_task.sh

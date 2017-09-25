@@ -1,0 +1,389 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>搭建python量化环境 &mdash; workbook 0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="workbook 0.1 documentation" href="../index.html"/>
+        <link rel="up" title="python心得" href="index.html"/>
+        <link rel="next" title="思想随笔" href="../article/index.html"/>
+        <link rel="prev" title="python心得" href="index.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> workbook
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">目录:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">python心得</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">搭建python量化环境</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../article/index.html">思想随笔</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trade/index.html">交易心得</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">workbook</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="index.html">python心得</a> &raquo;</li>
+        
+      <li>搭建python量化环境</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/python/1.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="python">
+<h1>搭建python量化环境<a class="headerlink" href="#python" title="Permalink to this headline">¶</a></h1>
+<dl class="docutils">
+<dt>1、安装apparmor相关软件</dt>
+<dd><blockquote class="first">
+<div>Ubuntu/debian系统集成了apparmor，但包括的profile文件(类似规则文件)及一些附带的操作模块较少，可以自行安装。</div></blockquote>
+<p>安装补充的profiles：
+sudo apt-get install apparmor-profiles
+安装方便操作apparmor的工具：
+sudo apt-get install apparmor-utils
+安装完成后，运行apparmor_status，如果显示如下错误：</p>
+<blockquote class="last">
+<div>apparmor module is loaded.
+apparmor filesystem is not mounted.
+则修改/etc/default/grub文件，设置：
+GRUB_CMDLINE_LINUX_DEFAULT =&quot;apparmor=1 security=apparmor&quot;。
+然后运行：
+sudo update-grub
+sudo reboot</div></blockquote>
+</dd>
+<dt>2、为沙箱添加用户和用户组</dt>
+<dd>sudo addgroup sandbox
+sudo adduser --disabled-login sandbox --ingroup sandbox</dd>
+<dt>3、创建python虚拟环境</dt>
+<dd>创建虚拟环境需要使用virtualenv进行。先安装virtualenv。
+sudo pip install virtualenv
+再在路径/opt/virtualenv下创建python3的虚拟环境。
+virtualenv --python=python3 py3</dd>
+<dt>4、配置项目服务以沙箱方式运行</dt>
+<dd>创建配置文件/etc/sudoers.d/01-sandbox
+sudo visudo -f /etc/sudoers.d/01-sandbox
+并在文件中写入：
+hexun ALL=(sandbox) SETENV:NOPASSWD:/opt/virtualenv/py3/bin/python3
+hexun ALL=(sandbox) SETENV:NOPASSWD:/usr/bin/find
+hexun ALL=(ALL) NOPASSWD:/usr/bin/pkill
+其中：
+hexun是在项目中调用代码的用户。有别于sandbox，作为沙箱内部的代码运行权限用     户。/opt/virtualenv/py3/bin/python3是步骤3中创建的虚拟环境。</dd>
+<dt>5、配置apparmor的配置文件</dt>
+<dd><dl class="first last docutils">
+<dt>① 创建配置文件</dt>
+<dd><p class="first">创建配置文件的文件名参照被配置应用的路径的，如如下位置的文件：
+/opt/virtualenv/py3/bin/python3
+其权限配置文件名为：
+opt.virtualenv.py3.bin.python3
+所以使用以下代码配置文件：
+sudo vi /etc/apparmor.d/ opt.virtualenv.py3.bin.python3
+加入下述配置：
+include &lt;tunables/global&gt;
+/opt/virtualenv/py3/bin/python3 flags=(complain) {
+#include &lt;abstractions/base&gt;
+#include &lt;abstractions/python&gt;
+/opt/virtualenv/py3/** mr,
+#If you have code that the sandbox must be able to access, add lines
+#pointing to those directories:
+/the/path/to/your/sandbox-packages/** r,
+/tmp/codejail-<em>/ rix,
+/tmp/codejail-</em>/** wrix,</p>
+<blockquote>
+<div>#cgroup</div></blockquote>
+<p>/sys/fs/cgroup/ rix,
+/sys/fs/cgroup/** wrix,</p>
+<blockquote>
+<div>#thrift network</div></blockquote>
+<p class="last">/tmp/** rix,
+/var/tmp/** wrix,
+/bin/dash ix,
+/sbin/ldconfig ix,
+/bin/uname ix,
+/etc/** r,
+/run/NetworkManager/** r,
+/proc/** r,
+network,
+#capabilities
+capability mknod,
+capability net_bind_service,
+capability net_admin,
+capability sys_tty_config,
+}</p>
+</dd>
+<dt>② 解析配置文件</dt>
+<dd>sudo apparmor_parser /etc/apparmor.d/opt.virtualenv.py3.bin.python3
+重启服务以使其生效
+sudo service apparmor restart</dd>
+</dl>
+</dd>
+<dt>6、配置机器中的python环境</dt>
+<dd><dl class="first last docutils">
+<dt>① 安装依赖模块</dt>
+<dd><p class="first">svn地址：svn://svn.tool.hexun.com/jsyf/tech_lab/src/requirements
+安装命令：pip install -r requirements_python2.txt</p>
+<blockquote>
+<div>pip3 install -r requirements_python3.txt</div></blockquote>
+<p class="last">注意：此处的pip是安装到实际的python环境中的。并非虚拟环境py3。</p>
+</dd>
+<dt>② 安装CodeJail</dt>
+<dd>svn地址：svn://svn.tool.hexun.com/jsyf/tech_lab/src/codejail。
+CodeJail的安装包使用Python2进行安装，安装依赖python-setuptools，所以定位                    至CodeJail源码文件夹之后使用：
+sudo apt-get install python-setuptools(如已安装setuptools，则跳过)
+sudo python2 setup.py bdist_egg
+sudo python2 setup.py install
+操作成功完成CodeJail安装。</dd>
+<dt>③ 安装cgroups</dt>
+<dd>svn地址：svn://svn.tool.hexun.com/jsyf/tech_lab/src/cgroups
+定位至cgroups源码文件夹之后使用：
+sudo python2 setup.py bdist_egg
+sudo python2 setup.py install
+操作成功完成Cgroups的安装。</dd>
+</dl>
+</dd>
+<dt>7、配置python虚拟环境</dt>
+<dd><p class="first">在CodeJail进行业务扩展变更的时候，需要对所使用的虚拟环境进行更改。由于虚拟环      境受到了AppArmor的保护，所以需要先通过
+sudo aa-complain /etc/apparmor.d/ opt.virtualenv.py3.bin.python3
+关闭AppArmor的保护，等完成环境更新之后再通过
+sudo aa-enforce /etc/apparmor.d/ opt.virtualenv.py3.bin.python3
+恢复对虚拟环境的权限保护。
+此时先关闭Apparmor对虚拟环境的保护，然后使用：
+source /opt/virtualenv/py3/bin/activate
+进入py3虚拟环境，并安装一下python模块。
+① 安装cgroups模块</p>
+<blockquote>
+<div>svn地址：svn://svn.tool.hexun.com/jsyf/tech_lab/src/cgroups</div></blockquote>
+<dl class="docutils">
+<dt>安装命令：   (注意此时采用python，而非python2)</dt>
+<dd>sudo python setup.py bdist_egg
+sudo python setup.py install</dd>
+<dt>② 安装quotedata_module模块</dt>
+<dd>svn地址：svn://svn.tool.hexun.com/jsyf/tech_lab/src/quotedata_module
+安装命令同上。</dd>
+<dt>③ 安装pyalgoengine模块</dt>
+<dd>svn地址：svn://svn.tool.hexun.com/jsyf/tech_lab/src/pyalgoengine
+安装命令同上。</dd>
+<dt>④ 安装其他依赖模块</dt>
+<dd>svn地址：svn://svn.tool.hexun.com/jsyf/tech_lab/src/requirements
+安装命令：pip install -r requirements_python3_env.txt</dd>
+</dl>
+<p class="last">安装完成之后，使用deactivate命令退出py3虚拟环境。并恢复apparmor对于虚拟环 境的权限保护。</p>
+</dd>
+<dt>8、开启量化Web服务</dt>
+<dd><dl class="first last docutils">
+<dt>① 启动jupyter服务</dt>
+<dd>svn地址：svn://svn.tool.hexun.com/jsyf/tech_lab/src/jupyter_task
+执行start_jupyter.sh。</dd>
+<dt>② 启动tornado服务</dt>
+<dd>svn地址：svn://svn.tool.hexun.com/jsyf/tech_lab/src/jupyter_task
+执行start_task.sh</dd>
+</dl>
+</dd>
+</dl>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../article/index.html" class="btn btn-neutral float-right" title="思想随笔" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral" title="python心得" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, houzhj.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'0.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
